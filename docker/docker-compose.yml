@@ -1,0 +1,16 @@
+services:
+  pgvector:
+    image: pgvector/pgvector:0.8.0-pg17
+    container_name: SmartEmailAssistant
+    ports:
+      - "5400:5432"
+    volumes:
+      - pgvector_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: ahmed
+      POSTGRES_PASSWORD: ahmed232005
+      POSTGRES_DB: SmartEmail
+    restart: always
+
+volumes:
+  pgvector_data:
