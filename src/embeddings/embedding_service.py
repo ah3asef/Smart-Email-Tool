@@ -5,7 +5,7 @@ class EmbeddingService:
 
     def __init__(self):
         self.model = SentenceTransformer(
-            "sentence-transformers/all-MiniLM-L6-v2"
+            "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
         )
 
     def embed_texts(self, texts):
