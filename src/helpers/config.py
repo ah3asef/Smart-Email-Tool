@@ -24,6 +24,13 @@ class Settings(BaseSettings):
     persist_directory : str
     collection_name : str
 
+    # Ollama generation
+    ollama_base_url: str 
+    ollama_model: str 
+    ollama_temperature: float 
+    ollama_top_p: float 
+    ollama_num_predict: int
+
     class Config():
         env_file = ".env"
 

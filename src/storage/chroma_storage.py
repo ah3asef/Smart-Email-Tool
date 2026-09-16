@@ -44,12 +44,7 @@ class ChromaStore:
         )
     
     def similarity_search(self, query: str, k: int = 5) :
-        """Return the top-*k* chunks most similar to *query*.
 
-        The query is embedded by the store's ``embedding_function``;
-        results are reconstructed into the original chunk dict schema
-        (``id``, ``email_id``, ``text``, ``chunk_index``, ``metadata``).
-        """
         results = self.collection.query(query_texts=[query], n_results=k)
 
         if not results["ids"] or not results["ids"][0]:

@@ -221,3 +221,9 @@ __marimo__/
 
 #secrets
 secrets/
+
+#assets
+assets/
+
+#Storage
+vector_storage/
