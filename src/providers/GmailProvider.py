@@ -173,7 +173,7 @@ class GmailLoader(EmailLoader):
         return emails
 
     # ------------------------------------------------------------------
-    # Private helpers
+    # Private helpers for extracting and validating
     # ------------------------------------------------------------------
 
     def _load_or_refresh_credentials(self) -> Credentials:

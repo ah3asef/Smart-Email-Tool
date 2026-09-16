@@ -1,18 +1,19 @@
 import chromadb
-
+from helpers.config import get_settings
 
 class ChromaStore:
 
     def __init__(self):
         self.client = chromadb.PersistentClient(
-            path="./chroma_db"
+            path=get_settings().persist_directory
         )
 
         self.collection = self.client.get_or_create_collection(
-            name="emails"
+            name=get_settings().collection_name,
+            metadata={"hnsw:space": "cosine"}
         )
 
-    def add_chunks(self, chunks, embeddings):
+    def add(self, chunks, embeddings):
 
         self.collection.add(
             ids=[chunk["chunk_id"] for chunk in chunks],
@@ -35,3 +36,38 @@ class ChromaStore:
                 for chunk in chunks
             ]
         )
+    def search(self, query_embedding: list[float], top_k: int = 3):
+
+        return self.collection.query(
+        query_embeddings=[query_embedding],
+        n_results=top_k,
+        )
+    
+    def similarity_search(self, query: str, k: int = 5) :
+        """Return the top-*k* chunks most similar to *query*.
+
+        The query is embedded by the store's ``embedding_function``;
+        results are reconstructed into the original chunk dict schema
+        (``id``, ``email_id``, ``text``, ``chunk_index``, ``metadata``).
+        """
+        results = self.collection.query(query_texts=[query], n_results=k)
+
+        if not results["ids"] or not results["ids"][0]:
+            return []
+
+        chunks = []
+        for i in range(len(results["ids"][0])):
+            doc_id = results["ids"][0][i]
+            text = results["documents"][0][i]
+            meta = dict(results["metadatas"][0][i]) if results["metadatas"] else {}
+            chunk_id = meta.pop("_id", doc_id)
+            chunks.append({
+                "id": chunk_id,
+                "email_id": meta.get("email_id", ""),
+                "text": text,
+                "chunk_index": meta.get("chunk_index", 0),
+                "metadata": meta,
+            })
+
+        return chunks
+    

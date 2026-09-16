@@ -8,6 +8,7 @@ from psycopg2.extras import RealDictRow
 from psycopg2 import sql
 from psycopg2.extras import RealDictCursor
 
+#UserSchema in DataBase
 CREATE_USERS_TABLE = """
 CREATE TABLE IF NOT EXISTS users (
     id            BIGSERIAL PRIMARY KEY,
@@ -23,11 +24,11 @@ CREATE TABLE IF NOT EXISTS users (
 """
 settings = get_settings()
 DB_ ={
-        "host": settings.POSTGRES_HOST,
-        "port": settings.POSTGRES_PORT,
-        "dbname": settings.POSTGRES_DB,
-        "user": settings.POSTGRES_USER,
-        "password": settings.POSTGRES_PASSWORD,
+        "host": settings.postgres_host,
+        "port": settings.postgres_port,
+        "dbname": settings.postgres_db,
+        "user": settings.postgres_user,
+        "password": settings.postgres_password,
     }
 def get_connection():
     return psycopg2.connect(**DB_,cursor_factory=RealDictCursor)
@@ -37,18 +38,18 @@ def create_data_base():
         with conn.cursor() as cur:
            cur.execute(
                "SELECT 1 FROM pg_database WHERE datname=%s",
-                (settings.POSTGRES_DB,)
+                (DB_['dbname'],)
             )
            exists = cur.fetchone()
            if not exists:
                 cur.execute(
                 sql.SQL("CREATE DATABASE {}").format(
-                sql.Identifier(settings.POSTGRES_DB)
+                sql.Identifier(DB_['dbname'])
                 )
             )
-                print(f"Database {settings.POSTGRES_DB} created")
+                print(f"Database {DB_['dbname']} created")
            else:
-                print(f"Database {settings.POSTGRES_DB} already exists")          
+                print(f"Database {DB_['dbname']} already exists")          
 
     pass
 def create_users_table() -> None:
