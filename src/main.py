@@ -2,12 +2,15 @@
 
 from pathlib import Path
 
-from providers.GmailProvider import GmailLoader
+#from providers.GmailProvider import GmailLoader
 from preprocessing.cleaner.EmailCleaner import EmailCleaner
 from preprocessing.chunks.email_chunking import EmailChunker
 from preprocessing.embeddings.embedding_service import EmbeddingService
-from chroma_storage.chroma_storage import ChromaStore
-
+from storage.chroma_storage import ChromaStore
+from applications.Retriever import Retriever
+from services.GenerationService import GenerationService
+from services.OllamaClient import OllamaClient
+from services.PromptBuilder import PromptBuilder
 TOKEN_PATH = Path(__file__).resolve().parent.parent / "secrets" / "token_gmail.json"
 Chunker = EmailChunker()
 
@@ -30,7 +33,7 @@ def main() -> None:
     # print(f"Created {len(chunks)} chunks")
 
     # # 3. Create embeddings
-    # embedding_service = EmbeddingService()
+    embedding_service = EmbeddingService()
     # texts = [chunk["text"] for chunk in chunks]
     # embeddings = embedding_service.embed_texts(texts)
     # print("Embeddings created")
@@ -39,9 +42,28 @@ def main() -> None:
     store = ChromaStore()
     # store.add(chunks, embeddings)
     # print("Stored in ChromaDB successfully")
-    query = "Search about devops"
-    print(store.similarity_search(query))
-    
+    retriever = Retriever(embedding_service, store)
+    generation_service = GenerationService(
+        retriever=retriever,
+        prompt_builder=PromptBuilder(),
+        llm_client=OllamaClient(),
+    )
+
+    query = "What emails did I receive about DevOps jobs?"
+    result = generation_service.generate(
+        query=query,
+        mode="question_answering",
+        top_k=5,
+    )
+
+    print("Answer:\n")
+    print(result.answer)
+
+    if result.sources:
+        print("\nSources:")
+        for source in result.sources:
+            print(f"- {source.subject} ({source.email_id}, {source.chunk_id})")
+
 
 
 if __name__ == "__main__":

@@ -31,7 +31,7 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
 from helpers.config import Settings, get_settings
-from queries import UserQueries
+from storage import UserQueries
 from models.schemas import UserModel
 
 logger = logging.getLogger(__name__)

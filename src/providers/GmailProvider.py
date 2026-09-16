@@ -42,7 +42,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import Resource, build
 from googleapiclient.errors import HttpError
 
-from .base.BaseEmailLoader import EmailLoader, EmailLoaderConnectionError, EmailLoaderFetchError
+from base.BaseEmailLoader import EmailLoader, EmailLoaderConnectionError, EmailLoaderFetchError
 from helpers.config import get_settings
 from models.EmailModel import Email
 

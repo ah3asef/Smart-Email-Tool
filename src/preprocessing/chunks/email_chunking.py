@@ -20,7 +20,7 @@ class EmailChunker:
 
     def chunk_email(self, email: Email):
 
-        text = self._build_email_text(email)
+        text = email.body or ""
 
         chunks = self.splitter.split_text(text)
 
@@ -47,15 +47,3 @@ class EmailChunker:
             all_chunks.extend(chunks)
 
         return all_chunks
-
-    def _build_email_text(self, email: Email):
-
-        parts = []
-
-        if email.subject:
-            parts.append(f"Subject: {email.subject}")
-
-        if email.body:
-            parts.append(email.body)
-
-        return "\n\n".join(parts)
