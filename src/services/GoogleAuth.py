@@ -31,8 +31,8 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
 from helpers.config import Settings, get_settings
-from queries import queries
-from models.user import User
+from queries import UserQueries
+from models.schemas import UserModel
 
 logger = logging.getLogger(__name__)
 
@@ -101,7 +101,7 @@ class AuthService:
     # Callback / authentication
     # ------------------------------------------------------------------
 
-    def authenticate(self, code: str, state: str) -> User:
+    def authenticate(self, code: str, state: str) -> UserModel:
         """
         Full callback handling: validate state, exchange the code, fetch the
         Google profile, and persist/refresh the user. Returns the stored user.
@@ -140,8 +140,8 @@ class AuthService:
             token=None,
             refresh_token=refresh_token,
             token_uri="https://oauth2.googleapis.com/token",
-            client_id=self.settings.GOOGLE_CLIENT_ID,
-            client_secret=self.settings.GOOGLE_CLIENT_SECRET,
+            client_id=self.settings.client_id,
+            client_secret=self.settings.client_secret,
         )
         try:
             creds.refresh(Request())
@@ -166,7 +166,7 @@ class AuthService:
             raise OAuthExchangeError(f"Failed to fetch Google profile: {exc}") from exc
         return profile
 
-    def _save_user(self, profile: dict[str, Any], credentials: Credentials) -> User:
+    def _save_user(self, profile: dict[str, Any], credentials: Credentials) -> UserModel:
         """
         Create the user if new, otherwise refresh tokens/profile. Persists via
         the database layer and returns the resulting `User` model.
@@ -186,19 +186,19 @@ class AuthService:
         if token_expiry is not None and token_expiry.tzinfo is None:
             token_expiry = token_expiry.replace(tzinfo=timezone.utc)
 
-        existing = queries.find_user_by_email(email)
+        existing = UserQueries.find_user_by_email(email)
 
         if existing is not None:
-            queries.update_user_tokens(
+            UserQueries.update_user_tokens(
                 existing["id"],
                 access_token=access_token,
                 refresh_token=refresh_token,
                 token_expiry=token_expiry,
             )
-            queries.update_user_profile(existing["id"], name=name)
-            row = queries.find_user_by_email(email)
+            UserQueries.update_user_profile(existing["id"], name=name)
+            row = UserQueries.find_user_by_email(email)
         else:
-            row = queries.create_user(
+            row = UserQueries.create_user(
                 google_id=google_id,
                 name=name,
                 email=email,
@@ -207,7 +207,7 @@ class AuthService:
                 token_expiry=token_expiry,
             )
 
-        return User(**dict(row))
+        return UserModel(**dict(row))
 
     # ------------------------------------------------------------------
     # CSRF state handling

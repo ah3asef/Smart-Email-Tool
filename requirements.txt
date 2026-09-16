@@ -7,3 +7,6 @@ fastapi>=0.110
 uvicorn[standard]>=0.29
 psycopg2==2.9.12
 pydantic-settings==2.14.2
+chromadb
+sentence-transformers
+langchain-text-splitters
