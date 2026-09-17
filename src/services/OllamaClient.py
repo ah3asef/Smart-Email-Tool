@@ -33,7 +33,7 @@ class OllamaClient:
         temperature: float | None = None,
         top_p: float | None = None,
         num_predict: int | None = None,
-        timeout: float = 60.0,
+        timeout: float | None = None,
     ) -> None:
         settings = get_settings()
         self.base_url = (base_url or settings.ollama_base_url).rstrip("/")
@@ -41,7 +41,7 @@ class OllamaClient:
         self.temperature = settings.ollama_temperature if temperature is None else temperature
         self.top_p = settings.ollama_top_p if top_p is None else top_p
         self.num_predict = settings.ollama_num_predict if num_predict is None else num_predict
-        self.timeout = timeout
+        self.timeout = settings.ollama_timeout if timeout is None else timeout
 
     def generate(self, messages: Sequence[Mapping[str, str]]) -> str:
         """Generate one non-streaming chat response from Ollama."""

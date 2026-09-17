@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any, Iterable, Literal, Mapping
 
 from pydantic import BaseModel, Field
 
 from services.PromptBuilder import GenerationMode, PromptBuilder
+
+logger = logging.getLogger(__name__)
 
 
 class GenerationSource(BaseModel):
@@ -38,10 +41,26 @@ class GenerationService:
         history: Iterable[Mapping[str, str]] | None = None,
     ) -> GenerationResult:
         results = self.retriever.retrieve(query=query, top_k=top_k)
+        logger.info(
+            "Retrieved %d chunks for query (mode=%s, top_k=%d)",
+            len(results),
+            mode,
+            top_k,
+        )
         messages = self.prompt_builder.build_messages(
             query=query, results=results, mode=mode, history=history
         )
+        logger.info(
+            "Building generation prompt from %d retrieved chunks; LLM receives %d messages",
+            len(results),
+            len(messages),
+        )
         answer = self.llm_client.generate(messages)
+        logger.info(
+            "LLM generation finished (answer length=%d, sources=%d)",
+            len(answer),
+            len(results),
+        )
         return GenerationResult(answer=answer, sources=self._sources_from(results))
 
     @staticmethod

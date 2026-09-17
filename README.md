@@ -2,6 +2,30 @@
 
 A RAG pipeline for email: ingest emails from Gmail, clean them, split into chunks, embed them, and store the vectors for retrieval.
 
+## Minimal API and UI
+
+The existing retrieval and generation services are exposed through a small
+FastAPI endpoint and the Streamlit UI in `src/app.py`.
+
+From the repository root, configure the existing required `.env` values, ensure
+Chroma contains indexed emails, and start Ollama with the configured model.
+
+```bash
+cd src
+uvicorn api:app --reload
+```
+
+In a second terminal:
+
+```bash
+cd src
+streamlit run app.py
+```
+
+`POST /query` accepts `query`, optional `mode` (`question_answering` or
+`email_drafting`), optional `top_k` (1–10), and optional user/assistant
+`history`. It returns the generated `answer` and retrieval-derived `sources`.
+
 ---
 
 ## Email Cleaning Architecture
