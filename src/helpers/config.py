@@ -30,6 +30,7 @@ class Settings(BaseSettings):
     ollama_temperature: float 
     ollama_top_p: float 
     ollama_num_predict: int
+    ollama_timeout: int
 
     class Config():
         env_file = ".env"

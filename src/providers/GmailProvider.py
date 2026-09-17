@@ -1,7 +1,7 @@
 """
 gmail_loader.py
 
-Concrete `EmailLoader` implementation that connects to the Gmail API and
+Concrete provider that connects to the Gmail API and
 returns emails as validated `Email` model objects.
 
 Data flow:
@@ -42,7 +42,6 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import Resource, build
 from googleapiclient.errors import HttpError
 
-from base.BaseEmailLoader import EmailLoader, EmailLoaderConnectionError, EmailLoaderFetchError
 from helpers.config import get_settings
 from models.EmailModel import Email
 
@@ -51,7 +50,7 @@ logger = logging.getLogger(__name__)
 DEFAULT_SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
 
 
-class GmailLoader(EmailLoader):
+class GmailLoader:
     """
     Loads emails from a Gmail account via the Gmail API.
 
@@ -115,7 +114,7 @@ class GmailLoader(EmailLoader):
         return self._service is not None
 
     # ------------------------------------------------------------------
-    # EmailLoader interface
+    # Public interface
     # ------------------------------------------------------------------
 
     def connect(self) -> None:
@@ -126,10 +125,8 @@ class GmailLoader(EmailLoader):
             self._creds = creds
             self._service = build("gmail", "v1", credentials=creds, cache_discovery=False)
             logger.info("Gmail API connection established.")
-        except EmailLoaderConnectionError:
-            raise
         except Exception as exc:  # noqa: BLE001 - normalize all failures
-            raise EmailLoaderConnectionError(f"Failed to connect to Gmail: {exc}") from exc
+            raise ConnectionError(f"Failed to connect to Gmail: {exc}") from exc
 
     def disconnect(self) -> None:
         """Release the Gmail API service and cached credentials."""
@@ -142,6 +139,13 @@ class GmailLoader(EmailLoader):
         self._creds = None
         logger.info("Disconnected from Gmail API.")
 
+    def __enter__(self) -> "GmailLoader":
+        self.connect()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+        self.disconnect()
+
     def fetch_emails(self) -> List[Email]:
         """
         Fetch up to `max_emails` emails from `label` and return them as
@@ -150,7 +154,7 @@ class GmailLoader(EmailLoader):
         the whole batch.
         """
         if not self.is_connected:
-            raise EmailLoaderConnectionError("Not connected. Call connect() first.")
+            raise RuntimeError("Not connected. Call connect() first.")
 
         emails: List[Email] = []
         message_ids = self._get_message_ids()
@@ -230,7 +234,7 @@ class GmailLoader(EmailLoader):
                 if not page_token:
                     break
         except HttpError as exc:
-            raise EmailLoaderFetchError(f"Failed to list Gmail messages: {exc}") from exc
+            raise RuntimeError(f"Failed to list Gmail messages: {exc}") from exc
 
         return message_ids[: self.max_emails]
 
@@ -245,7 +249,7 @@ class GmailLoader(EmailLoader):
                 .execute()
             )
         except HttpError as exc:
-            raise EmailLoaderFetchError(f"Failed to fetch message {message_id}: {exc}") from exc
+            raise RuntimeError(f"Failed to fetch message {message_id}: {exc}") from exc
 
     def _extract_headers(self, payload: Dict[str, Any]) -> Dict[str, str]:
         """Flatten Gmail's header list into a lowercase-keyed dict."""

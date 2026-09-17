@@ -12,7 +12,17 @@ class Retriever:
         self.vector_store = vector_store
 
     def retrieve(self, query: str, top_k: int = 5) -> List[Dict[str, Any]]:
-        """Return up to ``top_k`` chunks relevant to a non-empty query."""
+        """Return up to ``top_k`` chunks relevant to a non-empty query.
+
+        NOTE: This retriever is purely semantic/vector-similarity based. Temporal
+        queries such as "latest emails" ("اعرضلي أحدث ايميلات") are time-aware by
+        nature and generally are NOT answered correctly by embedding similarity
+        alone. A date/metadata-aware retrieval stage (sorting the candidates by
+        ``metadata["date"]``, or hybrid keyword + recency scoring) would be
+        required to answer those reliably. That is intentionally not implemented
+        here; whatever chunks ARE retrieved are still passed through to
+        PromptBuilder so generation remains grounded on real email content.
+        """
         if not isinstance(query, str) or not query.strip():
             raise ValueError("query must be a non-empty string")
         if top_k < 1:
